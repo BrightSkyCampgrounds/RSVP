@@ -1,6 +1,7 @@
 """Main Flask application for Campspots interim reservation system"""
 import os
 from datetime import datetime, timedelta
+from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 import stripe
 
@@ -16,6 +17,17 @@ db.init_app(app)
 
 # Configure Stripe
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
+
+
+# Admin authentication decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash('Please log in to access the admin panel.', 'warning')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @app.route('/')
@@ -225,7 +237,35 @@ def payment_cancel(reservation_id):
     return redirect(url_for('availability'))
 
 
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    """Admin login page"""
+    if request.method == 'POST':
+        password = request.form.get('password')
+
+        # Check password against environment variable
+        admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')  # Default for development
+
+        if password == admin_password:
+            session['admin_logged_in'] = True
+            flash('Successfully logged in!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Invalid password. Please try again.', 'error')
+
+    return render_template('admin/login.html')
+
+
+@app.route('/admin/logout')
+def admin_logout():
+    """Admin logout"""
+    session.pop('admin_logged_in', None)
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('index'))
+
+
 @app.route('/admin')
+@admin_required
 def admin_dashboard():
     """Admin dashboard - simple authentication would be needed for production"""
     # TODO: Add proper authentication
@@ -248,6 +288,7 @@ def admin_dashboard():
 
 
 @app.route('/admin/reservations')
+@admin_required
 def admin_reservations():
     """View all reservations"""
     # TODO: Add proper authentication

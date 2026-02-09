@@ -26,3 +26,6 @@ class Config:
 
     # Pricing (can be adjusted per site type later)
     DEFAULT_PRICE_PER_NIGHT = 35.00  # in dollars
+
+    # Admin Authentication
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme123')  # Change in production!
