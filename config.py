@@ -6,7 +6,11 @@ load_dotenv()
 class Config:
     """Application configuration"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///campspots.db'
+    # Handle both postgres:// and postgresql:// URLs
+    db_url = os.environ.get('DATABASE_URL') or 'sqlite:///campspots.db'
+    if db_url.startswith('postgres://'):
+        db_url = db_url.replace('postgres://', 'postgresql://', 1)
+    SQLALCHEMY_DATABASE_URI = db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Stripe Configuration
