@@ -17,54 +17,269 @@ def init_database():
             print(f"Error checking database: {e}")
             print("Continuing with initialization...")
 
-        print("Initializing database...")
+        print("Initializing database with real campground data...")
 
-        # Create the three campgrounds
-        campgrounds_data = [
-            {
-                'name': 'North Fork',
-                'description': 'Scenic campground along the North Fork.',
-                'location': 'USACE Lease Location'
-            },
-            {
-                'name': 'Cave Creek',
-                'description': 'Beautiful campground near Cave Creek.',
-                'location': 'USACE Lease Location'
-            },
-            {
-                'name': 'Pikes Ridge',
-                'description': 'Mountain campground at Pikes Ridge.',
-                'location': 'USACE Lease Location'
-            }
-        ]
+        # ===== NORTH FORK (81 sites) =====
+        north_fork = Campground(
+            name='North Fork',
+            description='Scenic campground along the North Fork with 81 sites including electric and primitive camping.',
+            location='USACE - Rough River Lake, KY'
+        )
+        db.session.add(north_fork)
+        db.session.flush()
 
-        for cg_data in campgrounds_data:
-            campground = Campground(**cg_data)
-            db.session.add(campground)
-            db.session.flush()  # Get the ID
+        # North Fork: Sites 1-48, 81 are electric
+        for i in range(1, 49):
+            is_multi_family = i in [18, 19, 24, 25, 47, 48]
+            is_long_term = 26 <= i <= 32
 
-            # Add sample sites for each campground
-            # TODO: Replace with actual site data
-            for i in range(1, 21):  # 20 sites per campground as placeholder
-                site = Site(
-                    campground_id=campground.id,
-                    site_number=f"{i:03d}",
-                    site_type="RV" if i <= 15 else "Tent",
-                    max_occupancy=6 if i <= 15 else 4,
-                    max_vehicles=2,
-                    hookups="Electric, Water, Sewer" if i <= 10 else "Electric, Water" if i <= 15 else "None",
-                    price_per_night=45.00 if i <= 10 else 35.00 if i <= 15 else 25.00,
-                    active=True
-                )
-                db.session.add(site)
+            notes = []
+            if is_multi_family:
+                notes.append("Multi-family site")
+            if is_long_term:
+                notes.append("Long-term camping available")
 
-            print(f"Created campground: {campground.name} with 20 sites")
+            site = Site(
+                campground_id=north_fork.id,
+                site_number=str(i),
+                site_type="RV - Electric",
+                max_occupancy=12 if is_multi_family else 6,
+                max_vehicles=4 if is_multi_family else 2,
+                hookups="Electric",
+                price_per_night=35.00,
+                active=True,
+                notes=" | ".join(notes) if notes else None
+            )
+            db.session.add(site)
+
+        # North Fork: Sites 49-80 are primitive
+        for i in range(49, 81):
+            site = Site(
+                campground_id=north_fork.id,
+                site_number=str(i),
+                site_type="Primitive",
+                max_occupancy=6,
+                max_vehicles=2,
+                hookups="None",
+                price_per_night=25.00,
+                active=True
+            )
+            db.session.add(site)
+
+        # North Fork: Site 81 is electric and handicap accessible
+        site = Site(
+            campground_id=north_fork.id,
+            site_number="81",
+            site_type="RV - Electric",
+            max_occupancy=6,
+            max_vehicles=2,
+            hookups="Electric",
+            price_per_night=35.00,
+            active=True,
+            notes="Handicap accessible"
+        )
+        db.session.add(site)
+
+        print(f"Created campground: {north_fork.name} with 81 sites")
+
+        # ===== CAVE CREEK (65 sites) =====
+        cave_creek = Campground(
+            name='Cave Creek',
+            description='Beautiful campground near Cave Creek with 65 sites including electric, primitive, and walk-in tent sites.',
+            location='USACE - Rough River Lake, KY'
+        )
+        db.session.add(cave_creek)
+        db.session.flush()
+
+        # Cave Creek: Sites 1-37 are electric
+        for i in range(1, 38):
+            is_pull_thru = i in [7, 37]
+            is_multi_family = i in [21, 22, 25, 26]
+            is_long_term = 1 <= i <= 13
+            is_handicap = i == 28
+
+            notes = []
+            if is_pull_thru:
+                notes.append("Pull-thru site")
+            if is_multi_family:
+                notes.append("Multi-family site")
+            if is_long_term:
+                notes.append("Long-term camping available")
+            if is_handicap:
+                notes.append("Handicap accessible")
+
+            site = Site(
+                campground_id=cave_creek.id,
+                site_number=str(i),
+                site_type="RV - Electric" + (" Pull-thru" if is_pull_thru else ""),
+                max_occupancy=12 if is_multi_family else 6,
+                max_vehicles=4 if is_multi_family else 2,
+                hookups="Electric",
+                price_per_night=35.00,
+                active=True,
+                notes=" | ".join(notes) if notes else None
+            )
+            db.session.add(site)
+
+        # Cave Creek: Sites 38-48 are primitive
+        for i in range(38, 49):
+            is_pull_thru = i in [43, 45]
+
+            site = Site(
+                campground_id=cave_creek.id,
+                site_number=str(i),
+                site_type="Primitive" + (" Pull-thru" if is_pull_thru else ""),
+                max_occupancy=6,
+                max_vehicles=2,
+                hookups="None",
+                price_per_night=25.00,
+                active=True,
+                notes="Pull-thru site" if is_pull_thru else None
+            )
+            db.session.add(site)
+
+        # Cave Creek: Sites 49-60 are electric
+        for i in range(49, 61):
+            is_pull_thru = i in [49, 53, 56]
+
+            site = Site(
+                campground_id=cave_creek.id,
+                site_number=str(i),
+                site_type="RV - Electric" + (" Pull-thru" if is_pull_thru else ""),
+                max_occupancy=6,
+                max_vehicles=2,
+                hookups="Electric",
+                price_per_night=35.00,
+                active=True,
+                notes="Pull-thru site" if is_pull_thru else None
+            )
+            db.session.add(site)
+
+        # Cave Creek: Sites 61-65 are walk-in tent sites
+        for i in range(61, 66):
+            site = Site(
+                campground_id=cave_creek.id,
+                site_number=str(i),
+                site_type="Walk-in Tent",
+                max_occupancy=6,
+                max_vehicles=1,
+                hookups="None",
+                price_per_night=20.00,
+                active=True,
+                notes="Walk-in tent site - parking nearby"
+            )
+            db.session.add(site)
+
+        print(f"Created campground: {cave_creek.name} with 65 sites")
+
+        # ===== PIKES RIDGE (60 sites) =====
+        pikes_ridge = Campground(
+            name='Pikes Ridge',
+            description='Mountain campground at Pikes Ridge with 60 sites offering electric and non-electric camping.',
+            location='USACE - Rough River Lake, KY'
+        )
+        db.session.add(pikes_ridge)
+        db.session.flush()
+
+        # Pikes Ridge: Sites 1-20 are electric
+        for i in range(1, 21):
+            site = Site(
+                campground_id=pikes_ridge.id,
+                site_number=str(i),
+                site_type="RV - Electric",
+                max_occupancy=6,
+                max_vehicles=2,
+                hookups="Electric",
+                price_per_night=35.00,
+                active=True
+            )
+            db.session.add(site)
+
+        # Pikes Ridge: Sites 21-27 are non-electric
+        for i in range(21, 28):
+            site = Site(
+                campground_id=pikes_ridge.id,
+                site_number=str(i),
+                site_type="Non-electric",
+                max_occupancy=6,
+                max_vehicles=2,
+                hookups="None",
+                price_per_night=25.00,
+                active=True
+            )
+            db.session.add(site)
+
+        # Pikes Ridge: Sites 28-29 are handicap accessible non-electric
+        for i in [28, 29]:
+            site = Site(
+                campground_id=pikes_ridge.id,
+                site_number=str(i),
+                site_type="Non-electric",
+                max_occupancy=6,
+                max_vehicles=2,
+                hookups="None",
+                price_per_night=25.00,
+                active=True,
+                notes="Handicap accessible"
+            )
+            db.session.add(site)
+
+        # Pikes Ridge: Sites 30-51 are non-electric
+        for i in range(30, 52):
+            site = Site(
+                campground_id=pikes_ridge.id,
+                site_number=str(i),
+                site_type="Non-electric",
+                max_occupancy=6,
+                max_vehicles=2,
+                hookups="None",
+                price_per_night=25.00,
+                active=True
+            )
+            db.session.add(site)
+
+        # Pikes Ridge: Site 52 is handicap accessible non-electric
+        site = Site(
+            campground_id=pikes_ridge.id,
+            site_number="52",
+            site_type="Non-electric",
+            max_occupancy=6,
+            max_vehicles=2,
+            hookups="None",
+            price_per_night=25.00,
+            active=True,
+            notes="Handicap accessible"
+        )
+        db.session.add(site)
+
+        # Pikes Ridge: Sites 53-60 are non-electric
+        for i in range(53, 61):
+            site = Site(
+                campground_id=pikes_ridge.id,
+                site_number=str(i),
+                site_type="Non-electric",
+                max_occupancy=6,
+                max_vehicles=2,
+                hookups="None",
+                price_per_night=25.00,
+                active=True
+            )
+            db.session.add(site)
+
+        print(f"Created campground: {pikes_ridge.name} with 60 sites")
 
         db.session.commit()
+        print("\n" + "="*60)
         print("Database initialization complete!")
+        print("="*60)
         print("\nCampgrounds created:")
         for cg in Campground.query.all():
-            print(f"  - {cg.name}: {cg.sites.count()} sites")
+            site_count = Site.query.filter_by(campground_id=cg.id).count()
+            print(f"  - {cg.name}: {site_count} sites")
+
+        total_sites = Site.query.count()
+        print(f"\n  TOTAL: {total_sites} sites across all campgrounds")
+        print("="*60)
 
 
 if __name__ == '__main__':
