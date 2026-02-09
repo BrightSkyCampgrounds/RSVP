@@ -23,7 +23,7 @@ def init_database():
         north_fork = Campground(
             name='North Fork',
             description='Scenic campground along the North Fork with 81 sites including electric and primitive camping.',
-            location='USACE - Rough River Lake, KY'
+            location='Rough River Lake, KY'
         )
         db.session.add(north_fork)
         db.session.flush()
@@ -86,7 +86,7 @@ def init_database():
         cave_creek = Campground(
             name='Cave Creek',
             description='Beautiful campground near Cave Creek with 65 sites including electric, primitive, and walk-in tent sites.',
-            location='USACE - Rough River Lake, KY'
+            location='Rough River Lake, KY'
         )
         db.session.add(cave_creek)
         db.session.flush()
@@ -176,7 +176,7 @@ def init_database():
         pikes_ridge = Campground(
             name='Pikes Ridge',
             description='Mountain campground at Pikes Ridge with 60 sites offering electric and non-electric camping.',
-            location='USACE - Rough River Lake, KY'
+            location='Green River Lake, KY'
         )
         db.session.add(pikes_ridge)
         db.session.flush()
