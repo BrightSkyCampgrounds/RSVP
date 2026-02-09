@@ -14,7 +14,7 @@
                 </a>
             </div>
             <div class="col-lg-6">
-                <img src="https://via.placeholder.com/600x400/198754/ffffff?text=Campground+Image" alt="Campground" class="img-fluid rounded shadow">
+                <img src="https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80" alt="Camping by the lake" class="img-fluid rounded shadow">
             </div>
         </div>
     </div>
@@ -27,7 +27,15 @@
         {% for campground in campgrounds %}
         <div class="col-md-4">
             <div class="card h-100 shadow-sm">
-                <img src="https://via.placeholder.com/400x250/198754/ffffff?text={{ campground.name }}" class="card-img-top" alt="{{ campground.name }}">
+                {% if campground.name == 'North Fork' %}
+                <img src="https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&q=80" alt="North Fork Campground" class="card-img-top">
+                {% elif campground.name == 'Cave Creek' %}
+                <img src="https://images.unsplash.com/photo-1537565732-b648da1c8838?w=600&q=80" alt="Cave Creek Campground" class="card-img-top">
+                {% elif campground.name == 'Pikes Ridge' %}
+                <img src="https://images.unsplash.com/photo-1487730116645-74489c95b41b?w=600&q=80" alt="Pikes Ridge Campground" class="card-img-top">
+                {% else %}
+                <img src="https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80" alt="{{ campground.name }}" class="card-img-top">
+                {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ campground.name }}</h5>
                     <p class="card-text">{{ campground.description }}</p>
