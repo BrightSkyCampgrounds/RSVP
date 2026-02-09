@@ -9,9 +9,13 @@ def init_database():
         db.create_all()
 
         # Check if data already exists
-        if Campground.query.first():
-            print("Database already initialized. Skipping.")
-            return
+        try:
+            if Campground.query.first():
+                print("Database already initialized. Skipping.")
+                return
+        except Exception as e:
+            print(f"Error checking database: {e}")
+            print("Continuing with initialization...")
 
         print("Initializing database...")
 
