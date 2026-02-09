@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Campspots** is an interim reservation system for Bright Sky Campgrounds, managing three USACE campground leases: **North Fork**, **Cave Creek**, and **Pikes Ridge**. This is a temporary solution deployed quickly to handle immediate reservation demand while the permanent Campspot management software is being prepared.
+**Campspots** is an interim reservation system for Bright Sky Campgrounds, managing three campgrounds: **North Fork**, **Cave Creek**, and **Pikes Ridge**. This is a temporary solution deployed quickly to handle immediate reservation demand while the permanent Campspot management software is being prepared.
 
 **Critical Context:**
 - Press release went out Thursday for North Fork - already 20+ inquiries
