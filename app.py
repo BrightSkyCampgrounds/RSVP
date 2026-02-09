@@ -286,7 +286,9 @@ def inject_globals():
     """Inject global variables into templates"""
     return {
         'site_name': app.config['SITE_NAME'],
-        'stripe_publishable_key': app.config['STRIPE_PUBLISHABLE_KEY']
+        'stripe_publishable_key': app.config['STRIPE_PUBLISHABLE_KEY'],
+        'now': datetime.now,
+        'timedelta': timedelta
     }
 
 
