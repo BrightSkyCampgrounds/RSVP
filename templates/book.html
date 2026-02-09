@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Book Site {{ site.site_number }} - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="mb-4">Book Your Campsite</h1>
+
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">{{ site.campground.name }} - Site {{ site.site_number }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><i class="bi bi-tag"></i> <strong>Type:</strong> {{ site.site_type }}</p>
+                            <p><i class="bi bi-people"></i> <strong>Max Occupancy:</strong> {{ site.max_occupancy }}</p>
+                            <p><i class="bi bi-truck"></i> <strong>Max Vehicles:</strong> {{ site.max_vehicles }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="bi bi-plug"></i> <strong>Hookups:</strong> {{ site.hookups or 'None' }}</p>
+                            <p><i class="bi bi-currency-dollar"></i> <strong>Price:</strong> {{ site.price_per_night|currency }}/night</p>
+                        </div>
+                    </div>
+                    {% if site.notes %}
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle"></i> {{ site.notes }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Reservation Details</h5>
+
+                    <form method="POST" id="bookingForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="arrival" class="form-label">Arrival Date *</label>
+                                <input type="date" class="form-control" id="arrival" name="arrival"
+                                       value="{{ arrival }}" required
+                                       min="{{ (now() + timedelta(days=1)).strftime('%Y-%m-%d') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="departure" class="form-label">Departure Date *</label>
+                                <input type="date" class="form-control" id="departure" name="departure"
+                                       value="{{ departure }}" required>
+                            </div>
+                        </div>
+
+                        <div id="pricePreview" class="alert alert-info mb-3" style="display:none;">
+                            <strong>Total:</strong> <span id="totalAmount"></span> for <span id="numNights"></span> nights
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="mb-3">Your Information</h5>
+
+                        <div class="mb-3">
+                            <label for="customer_name" class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="customer_email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="customer_phone" class="form-label">Phone *</label>
+                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="mb-3">Camping Details</h5>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="num_occupants" class="form-label">Number of Occupants *</label>
+                                <input type="number" class="form-control" id="num_occupants" name="num_occupants"
+                                       min="1" max="{{ site.max_occupancy }}" required>
+                                <div class="form-text">Maximum: {{ site.max_occupancy }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="num_vehicles" class="form-label">Number of Vehicles *</label>
+                                <input type="number" class="form-control" id="num_vehicles" name="num_vehicles"
+                                       min="1" max="{{ site.max_vehicles }}" required>
+                                <div class="form-text">Maximum: {{ site.max_vehicles }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="vehicle_info" class="form-label">Vehicle Information</label>
+                            <textarea class="form-control" id="vehicle_info" name="vehicle_info" rows="2"
+                                      placeholder="RV length, vehicle type, license plate (optional)"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="special_requests" class="form-label">Special Requests</label>
+                            <textarea class="form-control" id="special_requests" name="special_requests" rows="3"
+                                      placeholder="Any special needs or requests (optional)"></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-credit-card"></i> Continue to Payment
+                            </button>
+                            <a href="{{ url_for('availability', campground=site.campground_id) }}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-lock"></i> <strong>Secure Payment:</strong> Your payment will be processed securely through Stripe.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const pricePerNight = {{ site.price_per_night }};
+
+function updatePrice() {
+    const arrival = document.getElementById('arrival').value;
+    const departure = document.getElementById('departure').value;
+
+    if (arrival && departure) {
+        const arrivalDate = new Date(arrival);
+        const departureDate = new Date(departure);
+        const numNights = Math.ceil((departureDate - arrivalDate) / (1000 * 60 * 60 * 24));
+
+        if (numNights > 0) {
+            const total = pricePerNight * numNights;
+            document.getElementById('totalAmount').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('numNights').textContent = numNights;
+            document.getElementById('pricePreview').style.display = 'block';
+        } else {
+            document.getElementById('pricePreview').style.display = 'none';
+        }
+    }
+}
+
+document.getElementById('arrival').addEventListener('change', function() {
+    const departureInput = document.getElementById('departure');
+    const arrivalDate = new Date(this.value);
+    arrivalDate.setDate(arrivalDate.getDate() + 1);
+    departureInput.min = arrivalDate.toISOString().split('T')[0];
+
+    updatePrice();
+});
+
+document.getElementById('departure').addEventListener('change', updatePrice);
+
+// Initial price calculation
+updatePrice();
+</script>
+{% endblock %}

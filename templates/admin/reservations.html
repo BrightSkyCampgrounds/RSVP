@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}All Reservations - Admin - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-calendar-check"></i> All Reservations</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="campground" class="form-label">Campground</label>
+                    <select class="form-select" id="campground" name="campground" onchange="this.form.submit()">
+                        <option value="">All Campgrounds</option>
+                        {% for cg in campgrounds %}
+                        <option value="{{ cg.id }}" {{ 'selected' if selected_campground == cg.id else '' }}>
+                            {{ cg.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        <option value="confirmed" {{ 'selected' if selected_status == 'confirmed' else '' }}>Confirmed</option>
+                        <option value="pending" {{ 'selected' if selected_status == 'pending' else '' }}>Pending</option>
+                        <option value="cancelled" {{ 'selected' if selected_status == 'cancelled' else '' }}>Cancelled</option>
+                        <option value="completed" {{ 'selected' if selected_status == 'completed' else '' }}>Completed</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <a href="{{ url_for('admin_reservations') }}" class="btn btn-outline-secondary w-100">
+                        Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reservations Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Confirmation</th>
+                            <th>Guest Info</th>
+                            <th>Campground</th>
+                            <th>Site</th>
+                            <th>Arrival</th>
+                            <th>Departure</th>
+                            <th>Nights</th>
+                            <th>Occupants</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in reservations %}
+                        <tr>
+                            <td><strong>{{ res.confirmation_code }}</strong></td>
+                            <td>
+                                <strong>{{ res.customer_name }}</strong><br>
+                                <small>{{ res.customer_email }}</small><br>
+                                <small>{{ res.customer_phone }}</small>
+                            </td>
+                            <td>{{ res.site.campground.name }}</td>
+                            <td>
+                                {{ res.site.site_number }}<br>
+                                <small class="text-muted">{{ res.site.site_type }}</small>
+                            </td>
+                            <td>{{ res.arrival_date.strftime('%m/%d/%y') }}</td>
+                            <td>{{ res.departure_date.strftime('%m/%d/%y') }}</td>
+                            <td>{{ res.num_nights }}</td>
+                            <td>
+                                {{ res.num_occupants }} people<br>
+                                <small class="text-muted">{{ res.num_vehicles }} vehicles</small>
+                            </td>
+                            <td>{{ res.total_amount|currency }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if res.status == 'confirmed' else 'warning' if res.status == 'pending' else 'danger' if res.status == 'cancelled' else 'secondary' }}">
+                                    {{ res.status|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if res.payment_status == 'paid' else 'warning' if res.payment_status == 'pending' else 'danger' }}">
+                                    {{ res.payment_status|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ res.created_at.strftime('%m/%d/%y %I:%M %p') }}<br>
+                                <small class="text-muted">by {{ res.created_by }}</small>
+                            </td>
+                        </tr>
+                        {% if res.vehicle_info or res.special_requests %}
+                        <tr class="table-light">
+                            <td colspan="12">
+                                {% if res.vehicle_info %}
+                                <small><strong>Vehicle:</strong> {{ res.vehicle_info }}</small><br>
+                                {% endif %}
+                                {% if res.special_requests %}
+                                <small><strong>Special Requests:</strong> {{ res.special_requests }}</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if not reservations %}
+            <p class="text-center text-muted mb-0">No reservations found matching your filters.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-3">
+        <i class="bi bi-info-circle"></i> <strong>Total:</strong> {{ reservations|length }} reservation(s)
+    </div>
+</div>
+{% endblock %}

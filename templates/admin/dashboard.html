@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">
+        <i class="bi bi-speedometer2"></i> Admin Dashboard
+    </h1>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Reservations</h5>
+                    <h2 class="mb-0">{{ total_reservations }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Confirmed</h5>
+                    <h2 class="mb-0">{{ confirmed_reservations }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Pending</h5>
+                    <h2 class="mb-0">{{ pending_reservations }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Quick Actions</h5>
+        </div>
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('admin_reservations') }}" class="btn btn-primary">
+                    <i class="bi bi-calendar-check"></i> View All Reservations
+                </a>
+                <a href="{{ url_for('admin_reservations', status='confirmed') }}" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Confirmed Only
+                </a>
+                <a href="{{ url_for('admin_reservations', status='pending') }}" class="btn btn-warning">
+                    <i class="bi bi-clock"></i> Pending Only
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Reservations -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Reservations</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Confirmation</th>
+                            <th>Guest</th>
+                            <th>Campground</th>
+                            <th>Site</th>
+                            <th>Dates</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in recent_reservations %}
+                        <tr>
+                            <td><strong>{{ res.confirmation_code }}</strong></td>
+                            <td>
+                                {{ res.customer_name }}<br>
+                                <small class="text-muted">{{ res.customer_email }}</small>
+                            </td>
+                            <td>{{ res.site.campground.name }}</td>
+                            <td>{{ res.site.site_number }}</td>
+                            <td>
+                                {{ res.arrival_date.strftime('%m/%d/%y') }} -
+                                {{ res.departure_date.strftime('%m/%d/%y') }}<br>
+                                <small class="text-muted">{{ res.num_nights }} nights</small>
+                            </td>
+                            <td>{{ res.total_amount|currency }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if res.status == 'confirmed' else 'warning' if res.status == 'pending' else 'secondary' }}">
+                                    {{ res.status|upper }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if not recent_reservations %}
+            <p class="text-center text-muted mb-0">No reservations yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

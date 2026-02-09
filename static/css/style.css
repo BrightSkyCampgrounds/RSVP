@@ -1,0 +1,101 @@
+/* Custom Styles for Bright Sky Campgrounds */
+
+:root {
+    --primary-green: #198754;
+    --dark-green: #146c43;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Hero Section */
+.hero-section {
+    padding: 80px 0;
+}
+
+.hero-section h1 {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Cards */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Site Cards */
+.site-card {
+    border: 2px solid #dee2e6;
+}
+
+.site-card:hover {
+    border-color: var(--primary-green);
+}
+
+.site-card .card-header {
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+}
+
+/* Buttons */
+.btn-success {
+    background-color: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+.btn-success:hover {
+    background-color: var(--dark-green);
+    border-color: var(--dark-green);
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+}
+
+/* Admin Tables */
+.table-responsive {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.table thead th {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Print Styles */
+@media print {
+    .navbar, footer, .btn, .alert-dismissible .btn-close {
+        display: none !important;
+    }
+
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 40px 0;
+    }
+
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+}

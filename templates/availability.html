@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Check Availability - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">Check Availability</h1>
+
+    <!-- Campground Selection -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Select a Campground</h5>
+            <div class="btn-group" role="group">
+                {% for campground in campgrounds %}
+                <a href="{{ url_for('availability', campground=campground.id) }}"
+                   class="btn btn-{{ 'success' if selected_campground and selected_campground.id == campground.id else 'outline-success' }}">
+                    {{ campground.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% if selected_campground %}
+    <h2>{{ selected_campground.name }} - Available Sites</h2>
+    <p class="text-muted">{{ selected_campground.description }}</p>
+
+    <!-- Date Selection Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="dateForm" class="row g-3">
+                <div class="col-md-5">
+                    <label for="arrivalDate" class="form-label">Arrival Date</label>
+                    <input type="date" class="form-control" id="arrivalDate" required
+                           min="{{ (now() + timedelta(days=1)).strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="col-md-5">
+                    <label for="departureDate" class="form-label">Departure Date</label>
+                    <input type="date" class="form-control" id="departureDate" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-success w-100">Check</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sites List -->
+    <div class="row g-4">
+        {% for site in sites %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm site-card" data-site-id="{{ site.id }}">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Site {{ site.site_number }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <i class="bi bi-tag"></i> <strong>Type:</strong> {{ site.site_type }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-people"></i> <strong>Max Occupancy:</strong> {{ site.max_occupancy }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-truck"></i> <strong>Max Vehicles:</strong> {{ site.max_vehicles }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-plug"></i> <strong>Hookups:</strong> {{ site.hookups or 'None' }}
+                    </p>
+                    <p class="mb-0">
+                        <i class="bi bi-currency-dollar"></i> <strong>Price:</strong> {{ site.price_per_night|currency }}/night
+                    </p>
+
+                    <div class="availability-result mt-3" style="display:none;">
+                        <div class="alert alert-info mb-0">
+                            <p class="mb-1"><strong>Total:</strong> <span class="total-price"></span></p>
+                            <p class="mb-0"><span class="num-nights"></span> nights</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('book', site_id=site.id) }}" class="btn btn-success w-100 book-btn">
+                        Book Now <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle"></i> Please select a campground to view available sites.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('dateForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const arrival = document.getElementById('arrivalDate').value;
+    const departure = document.getElementById('departureDate').value;
+
+    if (!arrival || !departure) {
+        alert('Please select both arrival and departure dates');
+        return;
+    }
+
+    // Check availability for each site
+    document.querySelectorAll('.site-card').forEach(card => {
+        const siteId = card.dataset.siteId;
+        const resultDiv = card.querySelector('.availability-result');
+        const bookBtn = card.querySelector('.book-btn');
+
+        fetch(`/api/check-availability?site_id=${siteId}&arrival=${arrival}&departure=${departure}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.available) {
+                    resultDiv.style.display = 'block';
+                    resultDiv.querySelector('.alert').className = 'alert alert-success mb-0';
+                    resultDiv.querySelector('.total-price').textContent = `$${data.total_price.toFixed(2)}`;
+                    resultDiv.querySelector('.num-nights').textContent = data.num_nights;
+
+                    // Update book button with dates
+                    bookBtn.href = `${bookBtn.href.split('?')[0]}?arrival=${arrival}&departure=${departure}`;
+                    bookBtn.disabled = false;
+                    bookBtn.innerHTML = 'Book Now <i class="bi bi-arrow-right"></i>';
+                } else {
+                    resultDiv.style.display = 'block';
+                    resultDiv.querySelector('.alert').className = 'alert alert-danger mb-0';
+                    resultDiv.querySelector('.total-price').textContent = 'Not Available';
+                    resultDiv.querySelector('.num-nights').textContent = data.error || 'Site is booked for these dates';
+
+                    bookBtn.disabled = true;
+                    bookBtn.innerHTML = 'Not Available';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+});
+
+// Set minimum departure date based on arrival date
+document.getElementById('arrivalDate')?.addEventListener('change', function() {
+    const departureInput = document.getElementById('departureDate');
+    const arrivalDate = new Date(this.value);
+    arrivalDate.setDate(arrivalDate.getDate() + 1);
+    departureInput.min = arrivalDate.toISOString().split('T')[0];
+
+    if (departureInput.value && departureInput.value <= this.value) {
+        departureInput.value = '';
+    }
+});
+</script>
+{% endblock %}

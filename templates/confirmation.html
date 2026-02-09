@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Reservation Confirmed - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-4">
+                <i class="bi bi-check-circle text-success" style="font-size: 5rem;"></i>
+                <h1 class="mt-3">Reservation Confirmed!</h1>
+                <p class="lead">Thank you for booking with {{ site_name }}</p>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Confirmation #{{ reservation.confirmation_code }}</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">Reservation Details</h5>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Campground:</strong><br>{{ reservation.site.campground.name }}</p>
+                            <p><strong>Site:</strong><br>Site {{ reservation.site.site_number }} ({{ reservation.site.site_type }})</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Check-in:</strong><br>{{ reservation.arrival_date.strftime('%B %d, %Y') }}</p>
+                            <p><strong>Check-out:</strong><br>{{ reservation.departure_date.strftime('%B %d, %Y') }}</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="mb-3">Guest Information</h5>
+                    <p><strong>Name:</strong> {{ reservation.customer_name }}</p>
+                    <p><strong>Email:</strong> {{ reservation.customer_email }}</p>
+                    <p><strong>Phone:</strong> {{ reservation.customer_phone }}</p>
+                    <p><strong>Occupants:</strong> {{ reservation.num_occupants }} person(s)</p>
+                    <p><strong>Vehicles:</strong> {{ reservation.num_vehicles }}</p>
+
+                    {% if reservation.vehicle_info %}
+                    <p><strong>Vehicle Info:</strong><br>{{ reservation.vehicle_info }}</p>
+                    {% endif %}
+
+                    {% if reservation.special_requests %}
+                    <p><strong>Special Requests:</strong><br>{{ reservation.special_requests }}</p>
+                    {% endif %}
+
+                    <hr>
+
+                    <h5 class="mb-3">Payment Summary</h5>
+                    <div class="row">
+                        <div class="col-6"><strong>{{ reservation.num_nights }} nights @ {{ reservation.site.price_per_night|currency }}/night</strong></div>
+                        <div class="col-6 text-end">{{ (reservation.site.price_per_night * reservation.num_nights)|currency }}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><h5>Total Paid</h5></div>
+                        <div class="col-6 text-end"><h5>{{ reservation.total_amount|currency }}</h5></div>
+                    </div>
+
+                    <div class="alert alert-success mt-3">
+                        <i class="bi bi-check-circle"></i> Payment processed successfully
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-envelope"></i> <strong>Confirmation Email:</strong> A confirmation email has been sent to {{ reservation.customer_email }}
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5>Important Information</h5>
+                    <ul>
+                        <li>Please bring a printed or digital copy of this confirmation</li>
+                        <li>Check-in time: 3:00 PM | Check-out time: 11:00 AM</li>
+                        <li>For questions or to modify your reservation, contact us at {{ config.ADMIN_EMAIL }}</li>
+                        <li>Cancellation policy: Contact us at least 48 hours before arrival for refunds</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-success btn-lg">
+                    <i class="bi bi-house"></i> Return to Home
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary">
+                    <i class="bi bi-printer"></i> Print Confirmation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
