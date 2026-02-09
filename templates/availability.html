@@ -2,6 +2,85 @@
 
 {% block title %}Check Availability - {{ site_name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+.site-type-badge {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+.badge-electric { background-color: #0d6efd; color: white; }
+.badge-primitive { background-color: #198754; color: white; }
+.badge-tent { background-color: #fd7e14; color: white; }
+.badge-pullthru { background-color: #6f42c1; color: white; }
+.badge-multifamily { background-color: #d63384; color: white; }
+.badge-handicap { background-color: #0dcaf0; color: black; }
+.badge-longterm { background-color: #ffc107; color: black; }
+
+.site-card {
+    transition: all 0.2s;
+    border-left: 4px solid #dee2e6;
+}
+.site-card.electric { border-left-color: #0d6efd; }
+.site-card.primitive { border-left-color: #198754; }
+.site-card.tent { border-left-color: #fd7e14; }
+
+.availability-grid {
+    overflow-x: auto;
+}
+
+.availability-table {
+    font-size: 0.85rem;
+}
+
+.availability-table th {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+}
+
+.availability-table td {
+    padding: 4px;
+    text-align: center;
+    min-width: 35px;
+}
+
+.site-number {
+    font-weight: 700;
+    color: #0d6efd;
+}
+
+.campground-map {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.filter-chip {
+    display: inline-block;
+    padding: 5px 12px;
+    margin: 5px;
+    border-radius: 20px;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-chip:hover, .filter-chip.active {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.view-toggle {
+    margin-bottom: 20px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container my-5">
     <h1 class="mb-4">Check Availability</h1>
@@ -22,70 +101,166 @@
     </div>
 
     {% if selected_campground %}
-    <h2>{{ selected_campground.name }} - Available Sites</h2>
+    <h2>{{ selected_campground.name }}</h2>
     <p class="text-muted">{{ selected_campground.description }}</p>
 
-    <!-- Date Selection Form -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form id="dateForm" class="row g-3">
-                <div class="col-md-5">
-                    <label for="arrivalDate" class="form-label">Arrival Date</label>
-                    <input type="date" class="form-control" id="arrivalDate" required
-                           min="{{ (now() + timedelta(days=1)).strftime('%Y-%m-%d') }}">
-                </div>
-                <div class="col-md-5">
-                    <label for="departureDate" class="form-label">Departure Date</label>
-                    <input type="date" class="form-control" id="departureDate" required>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-success w-100">Check</button>
-                </div>
-            </form>
+    <!-- View Toggle -->
+    <div class="view-toggle">
+        <div class="btn-group" role="group">
+            <button class="btn btn-outline-primary active" id="listViewBtn">List View</button>
+            <button class="btn btn-outline-primary" id="calendarViewBtn">Calendar View</button>
+            <button class="btn btn-outline-primary" id="mapViewBtn">Map View</button>
         </div>
     </div>
 
-    <!-- Sites List -->
-    <div class="row g-4">
-        {% for site in sites %}
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm site-card" data-site-id="{{ site.id }}">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Site {{ site.site_number }}</h5>
-                </div>
-                <div class="card-body">
-                    <p class="mb-2">
-                        <i class="bi bi-tag"></i> <strong>Type:</strong> {{ site.site_type }}
-                    </p>
-                    <p class="mb-2">
-                        <i class="bi bi-people"></i> <strong>Max Occupancy:</strong> {{ site.max_occupancy }}
-                    </p>
-                    <p class="mb-2">
-                        <i class="bi bi-truck"></i> <strong>Max Vehicles:</strong> {{ site.max_vehicles }}
-                    </p>
-                    <p class="mb-2">
-                        <i class="bi bi-plug"></i> <strong>Hookups:</strong> {{ site.hookups or 'None' }}
-                    </p>
-                    <p class="mb-0">
-                        <i class="bi bi-currency-dollar"></i> <strong>Price:</strong> {{ site.price_per_night|currency }}/night
-                    </p>
+    <!-- Map View -->
+    <div id="mapView" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <h5>Campground Map</h5>
+                {% if selected_campground.name == 'North Fork' %}
+                <p class="small text-muted">
+                    <span class="badge-electric site-type-badge">Electric (1-48, 81)</span>
+                    <span class="badge-primitive site-type-badge">Primitive (49-80)</span>
+                    <span class="badge-multifamily site-type-badge">Multi-family (18/19, 24/25, 47/48)</span>
+                    <span class="badge-handicap site-type-badge">Handicap (81)</span>
+                    <span class="badge-longterm site-type-badge">Long-term (26-32)</span>
+                </p>
+                <p class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Map image would go here. Upload your North Fork map to display it.
+                </p>
+                {% elif selected_campground.name == 'Cave Creek' %}
+                <p class="small text-muted">
+                    <span class="badge-electric site-type-badge">Electric (1-37, 49-60)</span>
+                    <span class="badge-primitive site-type-badge">Primitive (38-48)</span>
+                    <span class="badge-tent site-type-badge">Walk-in Tent (61-65)</span>
+                    <span class="badge-pullthru site-type-badge">Pull-thru (7,37,43,45,49,53,56)</span>
+                    <span class="badge-multifamily site-type-badge">Multi-family (21/22, 25/26)</span>
+                </p>
+                <p class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Map image would go here. Upload your Cave Creek map to display it.
+                </p>
+                {% elif selected_campground.name == 'Pikes Ridge' %}
+                <p class="small text-muted">
+                    <span class="badge-electric site-type-badge">Electric (1-20)</span>
+                    <span class="badge-primitive site-type-badge">Non-electric (21-60)</span>
+                    <span class="badge-handicap site-type-badge">Handicap (28-29, 52)</span>
+                </p>
+                <p class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Map image would go here. Upload your Pikes Ridge map to display it.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-                    <div class="availability-result mt-3" style="display:none;">
-                        <div class="alert alert-info mb-0">
-                            <p class="mb-1"><strong>Total:</strong> <span class="total-price"></span></p>
-                            <p class="mb-0"><span class="num-nights"></span> nights</p>
-                        </div>
+    <!-- Date Selection & Filters -->
+    <div id="listView">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-10">
+                        <form id="dateForm" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="arrivalDate" class="form-label">Arrival Date</label>
+                                <input type="date" class="form-control" id="arrivalDate" required
+                                       min="{{ (now() + timedelta(days=1)).strftime('%Y-%m-%d') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="departureDate" class="form-label">Departure Date</label>
+                                <input type="date" class="form-control" id="departureDate" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-success w-100">Check Availability</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                <div class="card-footer bg-transparent">
-                    <a href="{{ url_for('book', site_id=site.id) }}" class="btn btn-success w-100 book-btn">
-                        Book Now <i class="bi bi-arrow-right"></i>
-                    </a>
+
+                <!-- Site Type Filters -->
+                <div class="mt-3">
+                    <label class="form-label fw-bold">Filter by Type:</label><br>
+                    <span class="filter-chip active" data-filter="all">All Sites</span>
+                    <span class="filter-chip" data-filter="electric">Electric Only</span>
+                    <span class="filter-chip" data-filter="primitive">Primitive Only</span>
+                    <span class="filter-chip" data-filter="tent">Tent Sites</span>
+                    <span class="filter-chip" data-filter="pullthru">Pull-thru</span>
+                    <span class="filter-chip" data-filter="multifamily">Multi-family</span>
+                    <span class="filter-chip" data-filter="handicap">Handicap Accessible</span>
                 </div>
             </div>
         </div>
-        {% endfor %}
+
+        <!-- Sites List -->
+        <div class="row g-3">
+            {% for site in sites %}
+            <div class="col-md-6 col-lg-4 site-item"
+                 data-type="{{ 'electric' if 'Electric' in site.site_type else 'primitive' if 'Primitive' in site.site_type or 'Non-electric' in site.site_type else 'tent' if 'Tent' in site.site_type else 'other' }}"
+                 data-pullthru="{{ 'true' if 'Pull-thru' in site.site_type else 'false' }}"
+                 data-multifamily="{{ 'true' if site.notes and 'Multi-family' in site.notes else 'false' }}"
+                 data-handicap="{{ 'true' if site.notes and 'Handicap' in site.notes else 'false' }}">
+                <div class="card h-100 shadow-sm site-card site-card-{{ site.id }} {{ 'electric' if 'Electric' in site.site_type else 'primitive' if 'Primitive' in site.site_type or 'Non-electric' in site.site_type else 'tent' }}">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 site-number">Site {{ site.site_number }}</h5>
+                            <span class="badge-{{ 'electric' if 'Electric' in site.site_type else 'primitive' if 'Primitive' in site.site_type or 'Non-electric' in site.site_type else 'tent' }} site-type-badge">
+                                {{ site.site_type }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="small">
+                            <p class="mb-1">
+                                <i class="bi bi-people"></i> Up to {{ site.max_occupancy }} people
+                            </p>
+                            <p class="mb-1">
+                                <i class="bi bi-truck"></i> {{ site.max_vehicles }} vehicle(s)
+                            </p>
+                            <p class="mb-1">
+                                <i class="bi bi-plug"></i> {{ site.hookups or 'No hookups' }}
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-currency-dollar"></i> {{ site.price_per_night|currency }}/night
+                            </p>
+
+                            {% if site.notes %}
+                            <div class="mb-2">
+                                {% for note in site.notes.split('|') %}
+                                <span class="badge-{{ 'pullthru' if 'Pull-thru' in note else 'multifamily' if 'Multi-family' in note else 'handicap' if 'Handicap' in note else 'longterm' if 'Long-term' in note else 'secondary' }} site-type-badge">
+                                    {{ note.strip() }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="availability-result mt-3" style="display:none;">
+                            <div class="alert alert-info mb-0">
+                                <p class="mb-1"><strong>Total:</strong> <span class="total-price"></span></p>
+                                <p class="mb-0"><span class="num-nights"></span> nights</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{{ url_for('book', site_id=site.id) }}" class="btn btn-success w-100 book-btn" data-site-id="{{ site.id }}">
+                            Book Now <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Calendar View (compact grid) -->
+    <div id="calendarView" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <h5>Select dates above to see calendar view</h5>
+                <div id="calendarGrid"></div>
+            </div>
+        </div>
     </div>
 
     {% else %}
@@ -98,6 +273,62 @@
 
 {% block extra_js %}
 <script>
+// View toggle
+document.getElementById('listViewBtn')?.addEventListener('click', function() {
+    document.getElementById('listView').style.display = 'block';
+    document.getElementById('calendarView').style.display = 'none';
+    document.getElementById('mapView').style.display = 'none';
+    document.querySelectorAll('.view-toggle .btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+});
+
+document.getElementById('calendarViewBtn')?.addEventListener('click', function() {
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('calendarView').style.display = 'block';
+    document.getElementById('mapView').style.display = 'none';
+    document.querySelectorAll('.view-toggle .btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+
+    // Generate calendar if dates are selected
+    const arrival = document.getElementById('arrivalDate').value;
+    const departure = document.getElementById('departureDate').value;
+    if (arrival && departure) {
+        generateCalendarView(arrival, departure);
+    }
+});
+
+document.getElementById('mapViewBtn')?.addEventListener('click', function() {
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('calendarView').style.display = 'none';
+    document.getElementById('mapView').style.display = 'block';
+    document.querySelectorAll('.view-toggle .btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+});
+
+// Filter functionality
+document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+
+        const filter = this.dataset.filter;
+        document.querySelectorAll('.site-item').forEach(item => {
+            if (filter === 'all') {
+                item.style.display = 'block';
+            } else if (filter === 'pullthru') {
+                item.style.display = item.dataset.pullthru === 'true' ? 'block' : 'none';
+            } else if (filter === 'multifamily') {
+                item.style.display = item.dataset.multifamily === 'true' ? 'block' : 'none';
+            } else if (filter === 'handicap') {
+                item.style.display = item.dataset.handicap === 'true' ? 'block' : 'none';
+            } else {
+                item.style.display = item.dataset.type === filter ? 'block' : 'none';
+            }
+        });
+    });
+});
+
+// Date form submission
 document.getElementById('dateForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -109,9 +340,9 @@ document.getElementById('dateForm')?.addEventListener('submit', function(e) {
         return;
     }
 
-    // Check availability for each site
+    // Check availability for each visible site
     document.querySelectorAll('.site-card').forEach(card => {
-        const siteId = card.dataset.siteId;
+        const siteId = card.querySelector('.book-btn').dataset.siteId;
         const resultDiv = card.querySelector('.availability-result');
         const bookBtn = card.querySelector('.book-btn');
 
@@ -124,10 +355,10 @@ document.getElementById('dateForm')?.addEventListener('submit', function(e) {
                     resultDiv.querySelector('.total-price').textContent = `$${data.total_price.toFixed(2)}`;
                     resultDiv.querySelector('.num-nights').textContent = data.num_nights;
 
-                    // Update book button with dates
                     bookBtn.href = `${bookBtn.href.split('?')[0]}?arrival=${arrival}&departure=${departure}`;
                     bookBtn.disabled = false;
                     bookBtn.innerHTML = 'Book Now <i class="bi bi-arrow-right"></i>';
+                    card.style.opacity = '1';
                 } else {
                     resultDiv.style.display = 'block';
                     resultDiv.querySelector('.alert').className = 'alert alert-danger mb-0';
@@ -136,6 +367,7 @@ document.getElementById('dateForm')?.addEventListener('submit', function(e) {
 
                     bookBtn.disabled = true;
                     bookBtn.innerHTML = 'Not Available';
+                    card.style.opacity = '0.6';
                 }
             })
             .catch(error => {
@@ -143,6 +375,46 @@ document.getElementById('dateForm')?.addEventListener('submit', function(e) {
             });
     });
 });
+
+// Generate calendar grid view
+function generateCalendarView(arrival, departure) {
+    const arrivalDate = new Date(arrival);
+    const departureDate = new Date(departure);
+    const days = Math.ceil((departureDate - arrivalDate) / (1000 * 60 * 60 * 24));
+
+    let html = '<div class="availability-grid"><table class="table table-sm table-bordered availability-table">';
+    html += '<thead><tr><th>Site</th><th>Type</th><th>Price</th>';
+
+    // Date headers
+    for (let i = 0; i < days; i++) {
+        const date = new Date(arrivalDate);
+        date.setDate(date.getDate() + i);
+        html += `<th>${date.getMonth()+1}/${date.getDate()}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+
+    // Site rows
+    document.querySelectorAll('.site-item').forEach(item => {
+        if (item.style.display === 'none') return;
+
+        const card = item.querySelector('.site-card');
+        const siteNum = item.querySelector('.site-number').textContent;
+        const siteType = item.querySelector('.site-type-badge').textContent;
+        const price = item.querySelector('.bi-currency-dollar').parentElement.textContent.trim();
+
+        html += `<tr><td class="fw-bold">${siteNum}</td><td><small>${siteType}</small></td><td><small>${price}</small></td>`;
+
+        for (let i = 0; i < days; i++) {
+            html += '<td><span class="badge bg-success">✓</span></td>';
+        }
+        html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    html += '<p class="text-muted small mt-2"><i class="bi bi-info-circle"></i> Green checkmarks indicate availability. Click on a site to book.</p>';
+
+    document.getElementById('calendarGrid').innerHTML = html;
+}
 
 // Set minimum departure date based on arrival date
 document.getElementById('arrivalDate')?.addEventListener('change', function() {
